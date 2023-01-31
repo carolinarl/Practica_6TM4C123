@@ -59,20 +59,18 @@ extern void printString(char* string)
     }
 }
 
-extern void readString(char UART0_String[], char delimitador)
+extern int readString(char delimitador, char *string)
+// Se lee una cadena y regresa un apuntador de caracter char
 {
-
-   int i=0;
-   char string [20]; //= (char *)calloc(10,sizeof(char));
+   int i = 0;
    char c = readChar();
-   while(c != delimitador)
-   {
-       (UART0_String[i]) = c;
-       i++;
 
-       c = readChar();
+   while(c != delimitador)
+   { 
+            string[i] = c; //Guardado de caracter por caracter en la cadena 
+            i++;
+            c = readChar(); 
    }
 
-     UART0_String[i]= '\0';
-
+   return i;
 }
