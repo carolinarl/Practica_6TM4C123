@@ -2,24 +2,33 @@
 
 extern void Configurar_PWM(uint16_t freq)
 {
-    SYSCTL->RCGCPWM |= (1<<0); /*Enable reloj de modulo PWM1 pag 354*/
-    SYSCTL->RCGCGPIO |= (1<<5); /*Enable reloj de GPIO Puerto F pag 340 pin 5*/
-   // GPIOF->AFSEL |= (1<<3)|(1<<2)|(1<<1); /*Control de registros ya sea por GPIO o Otros Pag 672*/
-    GPIOF_AHB->AFSEL |= 0x0E;
-    GPIOF_AHB->PCTL |= (GPIOF_AHB->PCTL&0xFFFF000F) | 0x00006660; /*Combinado con la tabla Pag 1351 y el registro PCTL le digo que es pwm Pag 689*/
-    GPIOF_AHB->DEN |= (1<<3)|(1<<2)|(1<<1); /* para decirle si es digital o no Pag 682*/
-    PWM0->CC = (1<<8) | (0x2<<0);  /*Enable o Disable Divisor  Pag 1747*/
-    PWM0->_0_CTL = (0<<0);
-    PWM0->_1_CTL = (0<<0); /*Bloqueo y desbloqueo*/
-    PWM0->_1_GENB = 0x0000080C; /*Registro de las acciones del pwm Pag 1285*/
-    PWM0->_1_GENA = 0x0000008C; /*Registro de las acciones del pwm Pag 1282*/
-    PWM0->_0_GENB = 0x0000008C;//PWM5
-    PWM0->_1_LOAD = (int)(2500000/freq); /*cuentas=fclk/fpwm  para 1khz cuentas = (20,000,000/1000)*/
-    PWM0->_0_LOAD = (int)(2500000/freq);
-    PWM0->_1_CMPB = 0;
-    PWM0->_1_CMPA = 0;
+    SYSCTL->RCGCPWM |= (1 << 0);
+
+    // Enable the clock to Port B
+    SYSCTL->RCGCGPIO |= (1 << 1);
+
+    // Set the PWM pin as a PWM pin
+    GPIOB->AFSEL |= (1 << 6) | (1 << 7);
+    GPIOB->PCTL &= ~((0xF << 24) | (0xF << 28));
+    GPIOB->PCTL |= (0x4 << 24) | (0x4 << 28);
+
+    // Disable the PWM generator before configuring it
+    PWM0->_0_CTL &= ~(1 << 0);
+
+    // Set the PWM generator to count up down mode
+    PWM0->_0_GENA = (0x000000C0 | 0x00000008);
+    PWM0->_0_GENB = (0x00000C00 | 0x00000008);
+
+    // Set the period of the PWM signal
+    PWM0->_0_LOAD = (SystemCoreClock / 2000) - 1;
+
+    // Set the initial duty cycle to 0
     PWM0->_0_CMPA = 0;
-    PWM0->_1_CTL = (1<<0);// Se activa el generador 3
-    PWM0->_0_CTL = (1<<0);// Se activa el generador 2
-    PWM0->ENABLE = (1<<3) | (1<<2) | (1<<1); /*habilitar el bloque pa que pase Pag 1247*/
+    PWM0->_0_CMPB = 0;
+
+    // Enable the PWM output on the appropriate pins
+    PWM0->ENABLE = (0x00000002 | 0x00000004);
+
+    // Enable the PWM generator
+    PWM0->_0_CTL |= (1 << 0);
 }
